@@ -50,3 +50,8 @@ userProblemSchema.index({
     userId:1,
     lastRevisedDate:1,
 })
+const UserProblem = mongoose.model(
+    "UserProblem",userProblemSchema
+)
+
+export default UserProblem;
