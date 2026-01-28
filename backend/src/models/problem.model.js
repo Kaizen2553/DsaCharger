@@ -22,14 +22,14 @@ const problemSchema = new mongoose.Schema({
     required:true,
   },
 
-  createdBy:{
-    type: mongoose.Schema.Types.ObjectId,
-    ref:"User",
-    required:true,
-  }
 
 },{timeStamps:true});
 
+
+problemSchema.index(
+  {problemLink:1},
+  {unique:true},
+)
 
 const Problem = new mongoose.model('Problem',problemSchema);
 //export default mongoose.model("Problem",problemSchema);

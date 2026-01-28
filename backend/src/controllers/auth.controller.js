@@ -18,7 +18,6 @@ export const signup = async(req,res) => {
         const user = await User.findOne({email});
     
         if(user){
-            console.log(user._id);
             return res.status(400).json({message:"user already found"});
         }
     
@@ -133,4 +132,39 @@ export const checkMe = async(req,res) => {
         console.log('error in checkMe controller',error.message);
         return res.status(500).json({message:"internal server error"});
      }
+}
+
+export const updateProfile = async(req,res) => {
+    try{
+          const userId = req.userId;
+          const user = await User.findById(userId);
+
+          if(!user)return res.status(404).json({message:"user not found"});
+
+          const {fullname} = req.body;
+
+          if(!fullname){
+              return res.status(400).json({message:"fullname is not required"});
+          }
+
+
+          const updateUser = await User.findByIdAndUpdate(
+            userId,
+            {fullname},
+            {new:true, runValidators:true}
+          );
+
+          if(!updateUser){
+            return res.status(404).json({message:"user not found"});
+          }
+
+          
+
+          return res.status(200).json({message:"user updated successfully"});
+    }catch(error){
+          
+        console.log('error in updateController',error.message);
+        return res.status(500).json({message:"internal server error"});
+
+    }
 }
