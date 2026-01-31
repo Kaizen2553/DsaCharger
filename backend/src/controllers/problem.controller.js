@@ -89,7 +89,7 @@ export const problemlist = async(req,res) => {
       return res.status(200).json(solvedProblems);
 
    }catch(error){
-      console.log('error in problemList controller',error.message());
+      console.log('error in problemList controller',error.message);
       return res.status(500).json({message:'internal server error'});
    }
 
@@ -120,7 +120,7 @@ export const reviseProblem = async(req,res) => {
         {userId,problemId},
  
         {
-          $set:{lastRevisedDate:Date.now()},
+          $set:{lastRevisedDate:new Date()},
           $inc:{revisionCount:1},
         },
         {new:true},    
@@ -147,7 +147,7 @@ export const deleteProblem = async(req,res) => {
         ) ;
 
         if(!problem){
-          res.status(404).json({message:"problem not found"});
+          return res.status(404).json({message:"problem not found"});
         }
 
         const deletedProblem = await problem.deleteOne();
@@ -189,7 +189,16 @@ export const addNotes = async(req,res) => {
 }
 
 export const todayRevision = async(req,res) => {
+    
+    const difficultyWeight = {
+      'easy':1,
+      'medium':2,
+      'hard':3
+    }
 
+    const now = Date.now();
+
+    const maxLimit = 10;
     try{
       
       const userId = req.userId;
@@ -199,6 +208,14 @@ export const todayRevision = async(req,res) => {
          return res.status(200).json({message:"problems not found",problems:[]});
       }
 
+      userProblems.forEach((p)=>{
+        const lastDate = p.lastRevisedDate || p.solvedDate;
+        const daySince = Math.floor(now-lastDate.getTime())/(24*60*60*1000);
+        const difficulty = p.problemId.difficulty;
+        const priority = (daySince+1)*(difficultyWeight[difficulty])*(1/(1+p.revisionCount));
+        p.priority_count = priority;
+      })
+
       const totalProblems = userProblems.length;
       
       const revisionLim = getRevisionLimit(totalProblems);
@@ -207,22 +224,32 @@ export const todayRevision = async(req,res) => {
         return res.status(200).json({message:"not enough problems for revision"});
       }
 
-      userProblems.sort((a,b)=>{
-          const datea = a.lastRevisedDate || a.solvedDate ;
-          const dateb = b.lastRevisedDate || b.solvedDate ;
 
-          if(datea.getTime() == dateb.getTime()){
-            return a.revisionCount - b.revisionCount;
-          }
-          
-          return datea.getTime()-dateb.getTime();
+      const userLimit = parseInt(req.query.limit,10);
+      
+      const requestedLimit = Number.isInteger(userLimit) && userLimit>0 
+      ? userLimit:null;
+
+      
+
+      const finalLimit = requestedLimit ? 
+      Math.min(maxLimit,requestedLimit):revisionLim;
+
+
+      userProblems.sort((a,b)=>{
+           if(a.priority_count === b.priority_count){
+             return a.revisionCount - b.revisionCount;
+           }
+
+           return b.priority_count-a.priority_count;
       })
 
-      const result = selectProblems(userProblems,revisionLim);
+
+      const result = selectProblems(userProblems,finalLimit);
 
       return res.status(200).json({
         totalProblems:totalProblems,
-        revisionLimit:revisionLim,
+        revisionLimit:finalLimit,
         problems:result
       });
 
