@@ -6,12 +6,14 @@ import {connectDb} from './src/lib/db.js';
 
 import authRoutes from './src/routes/authRoutes.js';
 import problemRoutes from './src/routes/problem.routes.js';
+import cors from 'cors';
 
 dotenv.config();
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors({origin:process.env.CLIENT_URL,credentials:true}))
 
 const PORT = process.env.PORT;
 
