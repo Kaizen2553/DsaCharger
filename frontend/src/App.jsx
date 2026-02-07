@@ -12,6 +12,7 @@ import HomePage from './pages/HomePage'
 
 
 
+
 function App() {
    const {isCheckingAuth,checkAuth,authUser} = useAuthStore();
    
@@ -26,6 +27,7 @@ function App() {
           <Route path='/' element={<HomePage/>}/>
           <Route path='/register' element={!authUser?<SignUp/>:<Navigate to="/problems"/>}/>
           <Route path='/problems' element={authUser?<Problem/>:<Navigate to="/login"/>}/>
+          
        </Route>
        <Route element={<AuthLayout/>}>
          <Route path='/login' element={authUser?<Navigate to='/problems'/>:<Login/>}></Route>

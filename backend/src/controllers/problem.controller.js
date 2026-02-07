@@ -77,57 +77,70 @@ export const addProblem =  async(req,res)=>{
 }
 
 
-export const problemlist = async(req,res) => {
-//search userProblems schema and then populate the problems with their actual document so that we get the problem done by the user
-  try{
+export const problemlist = async (req, res) => {
+  try {
     const userId = req.userId;
-    const limit = 20;
-    const cursor = req.query.cursor;
     const search = req.query.search;
+    const limit = 500;
+    const cursor = req.query.cursor;
 
-    const query = {
-      userId,
-      ...(cursor && ({solvedDate:{$lt: new Date(cursor)}}))
+    // BASE QUERY
+    let query = { userId };
+
+    // Pagination ONLY if no search
+    if (!search && cursor) {
+      query.solvedDate = { $lt: new Date(cursor) };
     }
 
-    const problems = await UserProblem.find(query)
-    .sort({solvedDate:-1})
-    .limit(limit)
-    .populate({
-      path:'problemId',
-      match: search?
-       {
-        $or:[
-          {title:{$regex:search,$options:"i"}},
-          {difficulty:{$regex:search,$options:"i"}}
-        ]
-       }:{}});
+    let mongoQuery = UserProblem.find(query)
+      .sort({ solvedDate: -1 })
+      .populate({
+        path: "problemId",
+        match: search
+          ? {
+              $or: [
+                { title: { $regex: search, $options: "i" } },
+                { difficulty: { $regex: search, $options: "i" } },
+                { topic: {$regex: search, $options:"i"}}
+              ]
+            }
+          : {}
+      });
 
-    const filteredProblems = problems.filter(problem=> problem.problemId!==null);
-
-    //console.log(problems);
-
-    if(!filteredProblems){
-      return res.status(200).json({message:"no problems found"});
+    // Apply limit ONLY when not searching
+    if (!search) {
+      mongoQuery = mongoQuery.limit(limit);
     }
 
+    const problems = await mongoQuery;
 
-    const nextCursor = problems.length>0 ? problems[problems.length-1].solvedDate:null;
+    const filteredProblems = problems.filter(p => p.problemId !== null);
+
+    const nextCursor =
+      !search && problems.length > 0
+        ? problems[problems.length - 1].solvedDate
+        : null;
 
     res.status(200).json({
-      problem:filteredProblems,
+      problem: filteredProblems,
       nextCursor
     });
-  }catch(error){
-    console.log('error in problemList controller',error.message);
-  }
 
-}
+  } catch (error) {
+    console.log("error in problemList controller", error.message);
+    res.status(500).json({ message: "internal server error" });
+  }
+};
+
 
 export const problemDetail = async(req,res) => {
    try{
+      const userId = req.userId;
       const problemId = req.params.id;
-      const problem = await Problem.findById(problemId);
+      const problem = await UserProblem.findOne({
+        userId,
+        problemId
+      }).populate('problemId');
 
       if(!problem){
         return res.status(404).json({message:"problem not found"});
