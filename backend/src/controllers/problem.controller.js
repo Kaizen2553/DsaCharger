@@ -25,7 +25,7 @@ export const addProblem =  async(req,res)=>{
 
        const isLeetCode = hostname.includes('leetcode.com') && pathname.startsWith('/problems/');
        const isGFG = hostname.includes('geeksforgeeks.org') && pathname!=='/';
-       const isCodeForces = hostname.includes('codeforces.com') && pathname.startsWith('/problem/');
+       const isCodeForces = hostname.includes('codeforces.com') && pathname.startsWith('/problem');
 
 
        if(!isLeetCode && !isGFG && !isCodeForces){
@@ -53,7 +53,7 @@ export const addProblem =  async(req,res)=>{
 
 
 
-       const savedProblem  = await UserProblem.create({
+       const saved  = await UserProblem.create({
           userId:req.userId,
           problemId,
           solvedDate:new Date(),
@@ -62,11 +62,11 @@ export const addProblem =  async(req,res)=>{
           notes:null,
        });
 
-      if(savedProblem){
-        return res.status(200).json(savedProblem);
+      if(saved){
+        return res.status(200).json(saved);
       }
 
-      res.status(200).json(savedProblem);
+      //res.status(200).json(savedProblem);
 
       
 
@@ -79,19 +79,48 @@ export const addProblem =  async(req,res)=>{
 
 export const problemlist = async(req,res) => {
 //search userProblems schema and then populate the problems with their actual document so that we get the problem done by the user
-   try{
-      const userId = req.userId;
-      const solvedProblems = await UserProblem.find({
-         userId,
-      }).populate('problemId')
-      .sort({solvedDate:-1});
+  try{
+    const userId = req.userId;
+    const limit = 20;
+    const cursor = req.query.cursor;
+    const search = req.query.search;
 
-      return res.status(200).json(solvedProblems);
+    const query = {
+      userId,
+      ...(cursor && ({solvedDate:{$lt: new Date(cursor)}}))
+    }
 
-   }catch(error){
-      console.log('error in problemList controller',error.message);
-      return res.status(500).json({message:'internal server error'});
-   }
+    const problems = await UserProblem.find(query)
+    .sort({solvedDate:-1})
+    .limit(limit)
+    .populate({
+      path:'problemId',
+      match: search?
+       {
+        $or:[
+          {title:{$regex:search,$options:"i"}},
+          {difficulty:{$regex:search,$options:"i"}}
+        ]
+       }:{}});
+
+    const filteredProblems = problems.filter(problem=> problem.problemId!==null);
+
+    //console.log(problems);
+
+    if(!filteredProblems){
+      return res.status(200).json({message:"no problems found"});
+    }
+
+
+    const nextCursor = problems.length>0 ? problems[problems.length-1].solvedDate:null;
+
+    res.status(200).json({
+      problem:filteredProblems,
+      nextCursor
+    });
+  }catch(error){
+    console.log('error in problemList controller',error.message);
+  }
 
 }
 
@@ -258,3 +287,4 @@ export const todayRevision = async(req,res) => {
         return res.status(500).json({message:'internal server error'});
     }
 }
+

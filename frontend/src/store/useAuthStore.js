@@ -1,6 +1,7 @@
 import {create} from 'zustand';
 import { axiosInstance } from '../libs/axiosSetup';
 import toast from 'react-hot-toast';
+import { LogOut } from 'lucide-react';
 
 
 export const useAuthStore = create((set)=>({
@@ -51,5 +52,20 @@ export const useAuthStore = create((set)=>({
         }finally{
             set({isLoggingIn:false});
         }
+    },
+
+    logout : async() => {
+        try{
+           const res  = await axiosInstance.post('/auth/logout');
+           set({authUser:null});
+           toast.success('user logged out successfully') 
+        }catch(error){
+            console.log('error in logout in useAuthStore',error.message);
+            toast.error(error.response.data.message);
+        }
+    },
+
+    problemList : async() => {
+        
     }
 }))

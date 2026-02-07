@@ -7,7 +7,8 @@ import Layout from './components/Layout'
 import { useAuthStore } from './store/useAuthStore'
 import PageLoader from './components/PageLoader'
 import Problem from './pages/Problem'
-
+import AuthLayout from './components/authLayout'
+import HomePage from './pages/HomePage'
 
 
 
@@ -22,9 +23,12 @@ function App() {
  return(
     <Routes>
        <Route element={<Layout/>}>
-          <Route path='/' element={!authUser?<SignUp/>:<Navigate to="/problems"/>}/>
-          <Route path='/login' element={!authUser?<Login/>:<Navigate to="/problems"/>}/>
+          <Route path='/' element={<HomePage/>}/>
+          <Route path='/register' element={!authUser?<SignUp/>:<Navigate to="/problems"/>}/>
           <Route path='/problems' element={authUser?<Problem/>:<Navigate to="/login"/>}/>
+       </Route>
+       <Route element={<AuthLayout/>}>
+         <Route path='/login' element={authUser?<Navigate to='/problems'/>:<Login/>}></Route>
        </Route>
     </Routes>
  )

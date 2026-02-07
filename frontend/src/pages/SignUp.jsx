@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore';
 import { LoaderIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 function SignUp() {
   const [formData,setFormData] = useState(
@@ -68,10 +69,7 @@ function SignUp() {
 
             
               <p className='text-sm text-slate-400 mt-4'>Already have a account?{" "}
-                <span className='text-purple-400 cursor-pointer hover:underline'
-                onClick={()=>navigate('/login')}>
-                    Login
-                </span>
+               <Link className="text-purple-500" to={'/login'}>login</Link>
               </p>
 
         </div>

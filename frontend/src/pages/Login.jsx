@@ -3,6 +3,7 @@ import {useNavigate} from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore';
 import {LoaderIcon} from 'lucide-react';
 import {useState} from 'react'
+import { Link } from 'react-router-dom';
 
 function Login() {
   
@@ -59,10 +60,7 @@ function Login() {
 
             
               <p className='text-sm text-slate-400 mt-4'>Don't have an account yet?{" "}
-                <span className='text-purple-400 cursor-pointer hover:underline'
-                onClick={()=>navigate('/')}>
-                    Register
-                </span>
+                <Link className='text-purple-500' to='/'>Register</Link>
               </p>
 
         </div>
